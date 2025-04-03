@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dlra-topology name="paascloud-ecommerce">
+  <description>PaasCloud E-commerce Microservice Platform</description>
+  
+  <microservices>
+    <!-- API Gateway Service -->
+    <microservice id="paascloud-gateway" priority="high">
+      <container memory="1024" vcores="2"/>
+      <endpoints>
+        <endpoint host="0.0.0.0" port="7979"/>
+      </endpoints>
+      <dependencies>
+        <dependency ref="paascloud-discovery"/>
+        <dependency ref="paascloud-auth"/>
+      </dependencies>
+    </microservice>
+    
+    <!-- Discovery Service (Eureka) -->
+    <microservice id="paascloud-discovery" priority="critical">
+      <container memory="768" vcores="1"/>
+      <endpoints>
+        <endpoint host="0.0.0.0" port="8761"/>
+      </endpoints>
+    </microservice>
+    
+    <!-- Authentication Service -->
+    <microservice id="paascloud-auth" priority="critical">
+      <container memory="1024" vcores="2"/>
+      <endpoints>
+        <endpoint host="0.0.0.0" port="8000"/>
+      </endpoints>
+      <dependencies>
+        <dependency ref="paascloud-provider-uac"/>
+      </dependencies>
+    </microservice>
+    
+    <!-- User Account Center Service -->
+    <microservice id="paascloud-provider-uac" priority="high">
+      <container memory="1024" vcores="2"/>
+      <endpoints>
+        <endpoint host="0.0.0.0" port="8881"/>
+      </endpoints>
+      <dependencies>
+        <dependency ref="paascloud-discovery"/>
+        <dependency ref="uac-db"/>
+      </dependencies>
+    </microservice>
+    
+    <!-- Order Processing Service -->
+    <microservice id="paascloud-provider-omc" priority="critical">
+      <container memory="1024" vcores="2"/>
+      <endpoints>
+        <endpoint host="0.0.0.0" port="8882"/>
+      </endpoints>
+      <dependencies>
+        <dependency ref="paascloud-discovery"/>
+        <dependency ref="paascloud-provider-tpc"/>
+        <dependency ref="omc-db"/>
+      </dependencies>
+    </microservice>
+    
+    <!-- Product Management Service -->
+    <microservice id="paascloud-provider-mdc" priority="high">
+      <container memory="1024" vcores="2"/>
+      <endpoints>
+        <endpoint host="0.0.0.0" port="8883"/>
+      </endpoints>
+      <dependencies>
+        <dependency ref="paascloud-discovery"/>
+        <dependency ref="mdc-db"/>
+      </dependencies>
+    </microservice>
+    
+    <!-- Transaction Processing Center -->
+    <microservice id="paascloud-provider-tpc" priority="critical">
+      <container memory="1024" vcores="2"/>
+      <endpoints>
+        <endpoint host="0.0.0.0" port="8884"/>
+      </endpoints>
+      <dependencies>
+        <dependency ref="paascloud-discovery"/>
+        <dependency ref="tpc-db"/>
+        <dependency ref="mq-broker"/>
+      </dependencies>
+    </microservice>
+    
+    <!-- Task Scheduling Service -->
+    <microservice id="paascloud-provider-tsk" priority="medium">
+      <container memory="768" vcores="1"/>
+      <endpoints>
+        <endpoint host="0.0.0.0" port="8885"/>
+      </endpoints>
+      <dependencies>
+        <dependency ref="paascloud-discovery"/>
+        <dependency ref="tsk-db"/>
+      </dependencies>
+    </microservice>
+    
+    <!-- Storage Service -->
+    <microservice id="paascloud-provider-opc" priority="medium">
+      <container memory="768" vcores="1"/>
+      <endpoints>
+        <endpoint host="0.0.0.0" port="8886"/>
+      </endpoints>
+      <dependencies>
+        <dependency ref="paascloud-discovery"/>
+        <dependency ref="opc-db"/>
+      </dependencies>
+    </microservice>
+    
+    <!-- Message Queue Broker -->
+    <microservice id="mq-broker" priority="high">
+      <container memory="1024" vcores="2"/>
+      <endpoints>
+        <endpoint host="0.0.0.0" port="5672"/>
+      </endpoints>
+    </microservice>
+    
+    <!-- Database Services -->
+    <microservice id="uac-db" priority="medium">
+      <container memory="768" vcores="1"/>
+      <endpoints>
+        <endpoint host="0.0.0.0" port="3306"/>
+      </endpoints>
+    </microservice>
+    
+    <microservice id="omc-db" priority="medium">
+      <container memory="768" vcores="1"/>
+      <endpoints>
+        <endpoint host="0.0.0.0" port="3307"/>
+      </endpoints>
+    </microservice>
+    
+    <microservice id="mdc-db" priority="medium">
+      <container memory="768" vcores="1"/>
+      <endpoints>
+        <endpoint host="0.0.0.0" port="3308"/>
+      </endpoints>
+    </microservice>
+    
+    <microservice id="tpc-db" priority="medium">
+      <container memory="768" vcores="1"/>
+      <endpoints>
+        <endpoint host="0.0.0.0" port="3309"/>
+      </endpoints>
+    </microservice>
+    
+    <microservice id="tsk-db" priority="low">
+      <container memory="512" vcores="1"/>
+      <endpoints>
+        <endpoint host="0.0.0.0" port="3310"/>
+      </endpoints>
+    </microservice>
+    
+    <microservice id="opc-db" priority="low">
+      <container memory="512" vcores="1"/>
+      <endpoints>
+        <endpoint host="0.0.0.0" port="3311"/>
+      </endpoints>
+    </microservice>
+  </microservices>
+  
+  <monitoring>
+    <interval>180000</interval><!-- 3 minutes monitoring interval -->
+    <anomaly-threshold>2.0</anomaly-threshold>
+    <root-cause-depth>3</root-cause-depth>
+  </monitoring>
+  
+  <experimental-setup>
+    <test-scenario id="shopping-cart">
+      <description>Complete shopping process from browsing to payment</description>
+      <workload>
+        <users min="100" max="1000" ramp-up="60"/>
+        <duration>1800</duration><!-- 30 minutes test duration -->
+      </workload>
+      <critical-services>
+        <service ref="paascloud-provider-omc"/><!-- Order service -->
+        <service ref="paascloud-provider-tpc"/><!-- Transaction service -->
+      </critical-services>
+    </test-scenario>
+  </experimental-setup>
+</dlra-topology>
