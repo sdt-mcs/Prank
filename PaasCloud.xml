@@ -1,182 +1,322 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<dlra-topology name="paascloud-ecommerce">
-  <description>PaasCloud E-commerce Microservice Platform</description>
-  
-  <microservices>
-    <!-- API Gateway Service -->
-    <microservice id="paascloud-gateway" priority="high">
-      <container memory="1024" vcores="2"/>
-      <endpoints>
-        <endpoint host="0.0.0.0" port="7979"/>
-      </endpoints>
-      <dependencies>
-        <dependency ref="paascloud-discovery"/>
-        <dependency ref="paascloud-auth"/>
-      </dependencies>
-    </microservice>
-    
-    <!-- Discovery Service (Eureka) -->
-    <microservice id="paascloud-discovery" priority="critical">
-      <container memory="768" vcores="1"/>
-      <endpoints>
-        <endpoint host="0.0.0.0" port="8761"/>
-      </endpoints>
-    </microservice>
-    
-    <!-- Authentication Service -->
-    <microservice id="paascloud-auth" priority="critical">
-      <container memory="1024" vcores="2"/>
-      <endpoints>
-        <endpoint host="0.0.0.0" port="8000"/>
-      </endpoints>
-      <dependencies>
-        <dependency ref="paascloud-provider-uac"/>
-      </dependencies>
-    </microservice>
-    
-    <!-- User Account Center Service -->
-    <microservice id="paascloud-provider-uac" priority="high">
-      <container memory="1024" vcores="2"/>
-      <endpoints>
-        <endpoint host="0.0.0.0" port="8881"/>
-      </endpoints>
-      <dependencies>
-        <dependency ref="paascloud-discovery"/>
-        <dependency ref="uac-db"/>
-      </dependencies>
-    </microservice>
-    
-    <!-- Order Processing Service -->
-    <microservice id="paascloud-provider-omc" priority="critical">
-      <container memory="1024" vcores="2"/>
-      <endpoints>
-        <endpoint host="0.0.0.0" port="8882"/>
-      </endpoints>
-      <dependencies>
-        <dependency ref="paascloud-discovery"/>
-        <dependency ref="paascloud-provider-tpc"/>
-        <dependency ref="omc-db"/>
-      </dependencies>
-    </microservice>
-    
-    <!-- Product Management Service -->
-    <microservice id="paascloud-provider-mdc" priority="high">
-      <container memory="1024" vcores="2"/>
-      <endpoints>
-        <endpoint host="0.0.0.0" port="8883"/>
-      </endpoints>
-      <dependencies>
-        <dependency ref="paascloud-discovery"/>
-        <dependency ref="mdc-db"/>
-      </dependencies>
-    </microservice>
-    
-    <!-- Transaction Processing Center -->
-    <microservice id="paascloud-provider-tpc" priority="critical">
-      <container memory="1024" vcores="2"/>
-      <endpoints>
-        <endpoint host="0.0.0.0" port="8884"/>
-      </endpoints>
-      <dependencies>
-        <dependency ref="paascloud-discovery"/>
-        <dependency ref="tpc-db"/>
-        <dependency ref="mq-broker"/>
-      </dependencies>
-    </microservice>
-    
-    <!-- Task Scheduling Service -->
-    <microservice id="paascloud-provider-tsk" priority="medium">
-      <container memory="768" vcores="1"/>
-      <endpoints>
-        <endpoint host="0.0.0.0" port="8885"/>
-      </endpoints>
-      <dependencies>
-        <dependency ref="paascloud-discovery"/>
-        <dependency ref="tsk-db"/>
-      </dependencies>
-    </microservice>
-    
-    <!-- Storage Service -->
-    <microservice id="paascloud-provider-opc" priority="medium">
-      <container memory="768" vcores="1"/>
-      <endpoints>
-        <endpoint host="0.0.0.0" port="8886"/>
-      </endpoints>
-      <dependencies>
-        <dependency ref="paascloud-discovery"/>
-        <dependency ref="opc-db"/>
-      </dependencies>
-    </microservice>
-    
-    <!-- Message Queue Broker -->
-    <microservice id="mq-broker" priority="high">
-      <container memory="1024" vcores="2"/>
-      <endpoints>
-        <endpoint host="0.0.0.0" port="5672"/>
-      </endpoints>
-    </microservice>
-    
-    <!-- Database Services -->
-    <microservice id="uac-db" priority="medium">
-      <container memory="768" vcores="1"/>
-      <endpoints>
-        <endpoint host="0.0.0.0" port="3306"/>
-      </endpoints>
-    </microservice>
-    
-    <microservice id="omc-db" priority="medium">
-      <container memory="768" vcores="1"/>
-      <endpoints>
-        <endpoint host="0.0.0.0" port="3307"/>
-      </endpoints>
-    </microservice>
-    
-    <microservice id="mdc-db" priority="medium">
-      <container memory="768" vcores="1"/>
-      <endpoints>
-        <endpoint host="0.0.0.0" port="3308"/>
-      </endpoints>
-    </microservice>
-    
-    <microservice id="tpc-db" priority="medium">
-      <container memory="768" vcores="1"/>
-      <endpoints>
-        <endpoint host="0.0.0.0" port="3309"/>
-      </endpoints>
-    </microservice>
-    
-    <microservice id="tsk-db" priority="low">
-      <container memory="512" vcores="1"/>
-      <endpoints>
-        <endpoint host="0.0.0.0" port="3310"/>
-      </endpoints>
-    </microservice>
-    
-    <microservice id="opc-db" priority="low">
-      <container memory="512" vcores="1"/>
-      <endpoints>
-        <endpoint host="0.0.0.0" port="3311"/>
-      </endpoints>
-    </microservice>
-  </microservices>
-  
-  <monitoring>
-    <interval>180000</interval><!-- 3 minutes monitoring interval -->
+<!-- 
+  Prank Configuration for PaasCloud Microservices Deployment
+  This configuration file defines the DLRA topology for PaasCloud microservices
+  to be managed by the Prank QoS-driven resource management framework on Hadoop YARN 3.0
+-->
+<prank-configuration>
+  <!-- Global Settings -->
+  <global-settings>
+    <max-history-windows>10</max-history-windows>
     <anomaly-threshold>2.0</anomaly-threshold>
-    <root-cause-depth>3</root-cause-depth>
-  </monitoring>
-  
-  <experimental-setup>
-    <test-scenario id="shopping-cart">
-      <description>Complete shopping process from browsing to payment</description>
-      <workload>
-        <users min="100" max="1000" ramp-up="60"/>
-        <duration>1800</duration><!-- 30 minutes test duration -->
-      </workload>
-      <critical-services>
-        <service ref="paascloud-provider-omc"/><!-- Order service -->
-        <service ref="paascloud-provider-tpc"/><!-- Transaction service -->
-      </critical-services>
-    </test-scenario>
-  </experimental-setup>
-</dlra-topology>
+    <correlation-window-size>30</correlation-window-size>
+    <utilization-threshold>0.8</utilization-threshold>
+    <adjustment-interval-ms>180000</adjustment-interval-ms>
+    <min-container-memory-mb>512</min-container-memory-mb>
+    <min-container-vcores>1</min-container-vcores>
+  </global-settings>
+
+  <!-- DLRA Topology Definition: PaasCloud Microservices -->
+  <dlra-topology name="paascloud-master">
+    <description>PaasCloud Master Microservices Mall Architecture</description>
+    
+    <!-- Gateway Service: Primary entry point -->
+    <microservice-component id="paascloud-gateway" entry-point="true">
+      <name>API Gateway Service</name>
+      <description>Microservice API Gateway for routing service requests</description>
+      <resource-requirements>
+        <memory-mb>1024</memory-mb>
+        <vcores>2</vcores>
+      </resource-requirements>
+      <downstream-components>
+        <component id="paascloud-provider-uac" call-frequency="0.9"/>
+        <component id="paascloud-provider-mdc" call-frequency="0.7"/>
+        <component id="paascloud-provider-omc" call-frequency="0.6"/>
+        <component id="paascloud-provider-opc" call-frequency="0.5"/>
+        <component id="paascloud-provider-tpc" call-frequency="0.4"/>
+      </downstream-components>
+    </microservice-component>
+
+    <!-- Eureka: Service Registration and Discovery -->
+    <microservice-component id="paascloud-eureka">
+      <name>Service Registry</name>
+      <description>Eureka service registry for microservices registration</description>
+      <resource-requirements>
+        <memory-mb>1024</memory-mb>
+        <vcores>1</vcores>
+      </resource-requirements>
+      <downstream-components/>
+    </microservice-component>
+    
+    <!-- Config Server: Configuration Center -->
+    <microservice-component id="paascloud-discovery">
+      <name>Configuration Center</name>
+      <description>Spring Cloud Config server for centralized configuration</description>
+      <resource-requirements>
+        <memory-mb>1024</memory-mb>
+        <vcores>1</vcores>
+      </resource-requirements>
+      <downstream-components/>
+    </microservice-component>
+    
+    <!-- UAC: User Authentication Center -->
+    <microservice-component id="paascloud-provider-uac">
+      <name>User Auth Center</name>
+      <description>User authentication, authorization and OAuth2 service</description>
+      <resource-requirements>
+        <memory-mb>2048</memory-mb>
+        <vcores>3</vcores>
+      </resource-requirements>
+      <downstream-components>
+        <component id="paascloud-eureka" call-frequency="0.5"/>
+        <component id="paascloud-discovery" call-frequency="0.5"/>
+        <component id="db-mysql" call-frequency="0.8"/>
+        <component id="redis-server" call-frequency="0.7"/>
+        <component id="zookeeper" call-frequency="0.5"/>
+      </downstream-components>
+    </microservice-component>
+
+    <!-- MDC: Mall Data Center -->
+    <microservice-component id="paascloud-provider-mdc">
+      <name>Mall Data Center</name>
+      <description>Mall product management and data services</description>
+      <resource-requirements>
+        <memory-mb>2048</memory-mb>
+        <vcores>3</vcores>
+      </resource-requirements>
+      <downstream-components>
+        <component id="paascloud-eureka" call-frequency="0.5"/>
+        <component id="paascloud-discovery" call-frequency="0.5"/>
+        <component id="db-mysql" call-frequency="0.9"/>
+        <component id="redis-server" call-frequency="0.7"/>
+        <component id="zookeeper" call-frequency="0.5"/>
+        <component id="elastic-job-lite" call-frequency="0.6"/>
+        <component id="paascloud-provider-sdk" call-frequency="0.5"/>
+      </downstream-components>
+    </microservice-component>
+
+    <!-- OMC: Order Management Center -->
+    <microservice-component id="paascloud-provider-omc">
+      <name>Order Management Center</name>
+      <description>Order processing, payment and management services</description>
+      <resource-requirements>
+        <memory-mb>2048</memory-mb>
+        <vcores>3</vcores>
+      </resource-requirements>
+      <downstream-components>
+        <component id="paascloud-eureka" call-frequency="0.5"/>
+        <component id="paascloud-discovery" call-frequency="0.5"/>
+        <component id="db-mysql" call-frequency="0.9"/>
+        <component id="redis-server" call-frequency="0.7"/>
+        <component id="zookeeper" call-frequency="0.5"/>
+        <component id="elastic-job-lite" call-frequency="0.6"/>
+        <component id="paascloud-provider-sdk" call-frequency="0.5"/>
+        <component id="paascloud-provider-tpc" call-frequency="0.7"/>
+      </downstream-components>
+    </microservice-component>
+
+    <!-- OPC: Outward Processing Center -->
+    <microservice-component id="paascloud-provider-opc">
+      <name>Outward Processing Center</name>
+      <description>Third-party integration and external service processing</description>
+      <resource-requirements>
+        <memory-mb>2048</memory-mb>
+        <vcores>3</vcores>
+      </resource-requirements>
+      <downstream-components>
+        <component id="paascloud-eureka" call-frequency="0.5"/>
+        <component id="paascloud-discovery" call-frequency="0.5"/>
+        <component id="db-mysql" call-frequency="0.8"/>
+        <component id="redis-server" call-frequency="0.7"/>
+        <component id="zookeeper" call-frequency="0.5"/>
+        <component id="elastic-job-lite" call-frequency="0.6"/>
+        <component id="paascloud-provider-sdk" call-frequency="0.5"/>
+        <component id="aliyun-sms" call-frequency="0.4"/>
+        <component id="qiniu-storage" call-frequency="0.3"/>
+        <component id="gaode-map" call-frequency="0.2"/>
+      </downstream-components>
+    </microservice-component>
+
+    <!-- TPC: Task Processing Center -->
+    <microservice-component id="paascloud-provider-tpc">
+      <name>Task Processing Center</name>
+      <description>Reliable message and distributed task processing</description>
+      <resource-requirements>
+        <memory-mb>2048</memory-mb>
+        <vcores>3</vcores>
+      </resource-requirements>
+      <downstream-components>
+        <component id="paascloud-eureka" call-frequency="0.5"/>
+        <component id="paascloud-discovery" call-frequency="0.5"/>
+        <component id="db-mysql" call-frequency="0.8"/>
+        <component id="redis-server" call-frequency="0.7"/>
+        <component id="zookeeper" call-frequency="0.5"/>
+        <component id="mq-server" call-frequency="0.9"/>
+        <component id="elastic-job-lite" call-frequency="0.8"/>
+      </downstream-components>
+    </microservice-component>
+
+    <!-- SDK: Reliable Messaging Service -->
+    <microservice-component id="paascloud-provider-sdk">
+      <name>Reliable Messaging Service</name>
+      <description>SDK for reliable message delivery and management</description>
+      <resource-requirements>
+        <memory-mb>1024</memory-mb>
+        <vcores>1</vcores>
+      </resource-requirements>
+      <downstream-components>
+        <component id="mq-server" call-frequency="0.9"/>
+        <component id="paascloud-provider-tpc" call-frequency="0.7"/>
+      </downstream-components>
+    </microservice-component>
+
+    <!-- Monitoring Center -->
+    <microservice-component id="paascloud-monitor">
+      <name>Monitoring Center</name>
+      <description>Spring Boot Admin for application monitoring</description>
+      <resource-requirements>
+        <memory-mb>1536</memory-mb>
+        <vcores>2</vcores>
+      </resource-requirements>
+      <downstream-components>
+        <component id="paascloud-eureka" call-frequency="0.8"/>
+      </downstream-components>
+    </microservice-component>
+
+    <!-- Zipkin: Distributed Tracing -->
+    <microservice-component id="paascloud-zipkin">
+      <name>Distributed Tracing</name>
+      <description>Zipkin for distributed request tracing</description>
+      <resource-requirements>
+        <memory-mb>1536</memory-mb>
+        <vcores>2</vcores>
+      </resource-requirements>
+      <downstream-components>
+        <component id="paascloud-eureka" call-frequency="0.5"/>
+        <component id="db-mysql" call-frequency="0.6"/>
+      </downstream-components>
+    </microservice-component>
+
+    <!-- Infrastructure Services -->
+    <microservice-component id="db-mysql">
+      <name>MySQL Database</name>
+      <description>Relational database for persistent storage</description>
+      <resource-requirements>
+        <memory-mb>4096</memory-mb>
+        <vcores>4</vcores>
+      </resource-requirements>
+      <downstream-components/>
+    </microservice-component>
+
+    <microservice-component id="redis-server">
+      <name>Redis Cache</name>
+      <description>In-memory cache for performance optimization</description>
+      <resource-requirements>
+        <memory-mb>2048</memory-mb>
+        <vcores>2</vcores>
+      </resource-requirements>
+      <downstream-components/>
+    </microservice-component>
+
+    <microservice-component id="mq-server">
+      <name>Message Queue</name>
+      <description>RabbitMQ for asynchronous messaging</description>
+      <resource-requirements>
+        <memory-mb>2048</memory-mb>
+        <vcores>2</vcores>
+      </resource-requirements>
+      <downstream-components/>
+    </microservice-component>
+
+    <microservice-component id="zookeeper">
+      <name>ZooKeeper</name>
+      <description>Distributed coordination service</description>
+      <resource-requirements>
+        <memory-mb>1536</memory-mb>
+        <vcores>2</vcores>
+      </resource-requirements>
+      <downstream-components/>
+    </microservice-component>
+
+    <microservice-component id="elastic-job-lite">
+      <name>Elastic Job</name>
+      <description>Distributed task scheduling framework</description>
+      <resource-requirements>
+        <memory-mb>1536</memory-mb>
+        <vcores>2</vcores>
+      </resource-requirements>
+      <downstream-components>
+        <component id="zookeeper" call-frequency="0.9"/>
+      </downstream-components>
+    </microservice-component>
+
+    <!-- External Services -->
+    <microservice-component id="aliyun-sms">
+      <name>Aliyun SMS Service</name>
+      <description>Aliyun SMS integration for notifications</description>
+      <resource-requirements>
+        <memory-mb>512</memory-mb>
+        <vcores>1</vcores>
+      </resource-requirements>
+      <downstream-components/>
+    </microservice-component>
+
+    <microservice-component id="qiniu-storage">
+      <name>Qiniu Storage Service</name>
+      <description>Qiniu cloud storage for file management</description>
+      <resource-requirements>
+        <memory-mb>512</memory-mb>
+        <vcores>1</vcores>
+      </resource-requirements>
+      <downstream-components/>
+    </microservice-component>
+
+    <microservice-component id="gaode-map">
+      <name>Gaode Map API</name>
+      <description>Gaode map integration for location services</description>
+      <resource-requirements>
+        <memory-mb>512</memory-mb>
+        <vcores>1</vcores>
+      </resource-requirements>
+      <downstream-components/>
+    </microservice-component>
+  </dlra-topology>
+
+  <!-- Prank Resource Control Configuration -->
+  <resource-control>
+    <cpu-control>
+      <peak-threshold>0.90</peak-threshold>
+      <low-threshold>0.40</low-threshold>
+      <adjustment-interval-ms>60000</adjustment-interval-ms>
+      <increment-factor>0.1</increment-factor>
+    </cpu-control>
+    <memory-control>
+      <initial-reduction-factor>0.6</initial-reduction-factor>
+      <adjustment-interval-ms>120000</adjustment-interval-ms>
+      <increment-factor>0.05</increment-factor>
+    </memory-control>
+    <scheduling-delay>
+      <window-size-ms>180000</window-size-ms>
+      <utilization-threshold>0.8</utilization-threshold>
+    </scheduling-delay>
+  </resource-control>
+
+  <!-- Batch job priority configuration -->
+  <batch-job-priorities>
+    <job-type name="MAP" priority="1"/>
+    <job-type name="REDUCE" priority="2"/>
+    <importance-levels>
+      <level value="1" description="Low"/>
+      <level value="2" description="Below Normal"/>
+      <level value="3" description="Normal"/>
+      <level value="4" description="Above Normal"/>
+      <level value="5" description="High"/>
+    </importance-levels>
+    <priority-weights>
+      <deadline-weight>0.2</deadline-weight>
+      <importance-weight>0.3</importance-weight>
+      <resource-weight>0.4</resource-weight>
+      <progress-weight>0.1</progress-weight>
+    </priority-weights>
+  </batch-job-priorities>
+</prank-configuration>
